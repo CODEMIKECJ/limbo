@@ -1,0 +1,96 @@
+let turn = false
+let focused = false;
+
+let min = 0.000000113; // minimum bet 
+let safe = 2; // to po ilu razach zacznie betować normalną stawką
+let payout = 1.1;
+let speedBet = 1000; //zalecane 1000ms. zależnie od szybkości internetu 
+
+let lastBetwas = 0;
+let betQueue = 0;
+const engine = document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg;
+document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.payout = payout;
+let history = []; 
+let connected = false;
+let socket = false
+setInterval(()=>{ 
+
+    connected = window.navigator.onLine
+    socket = document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.socket.connected
+    history = []
+    for(let i = 0; i < document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.myBets.length; i++){
+        
+        history.push(
+            {
+                gameId: document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.myBets[i].betId,
+                odds: document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.myBets[i].gameValue
+            }
+        );
+    }
+
+    if(connected == true && socket == true){
+        if(focused == true){
+            if(document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.isBetting == false){
+                main();
+            }else{
+                console.log("wait for end")
+            }
+        }
+        
+    }else{
+        console.log("wait for connection...")
+        document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.amount = lastBetwas;
+        console.clear();
+    }
+    if(document.hidden == false){
+        focused = true
+    }else{
+        focused = true
+    }
+},speedBet)
+
+function main(){
+    if(turn == true){
+        if(engine.gameIsWin == true){    
+            bet(min)
+        }else{
+            let r1 = (history[0].odds / 100)  // r1 2 < 1.5 payout flase
+            let r2 = (history[1].odds / 100)
+            if(safe == 2){
+                if(r1 < payout && r2 < payout){
+                    betQueue = 0.0017
+                    if(history[2].odds / 100 < payout){
+                        //time 2
+                        betQueue = 0.0187
+                        
+                        if(history[3].odds / 100 < payout){
+                            //time 3
+                            betQueue = 0.2057
+                            
+                            if(history[4].odds / 100 < payout){
+                                //time 4
+                                betQueue = 2.2627
+                            }
+                        }
+                    }
+                    bet(betQueue)
+                }else{ 
+                    betQueue = 0;
+                    bet(min)
+                }
+            
+            }else{
+                console.log("Wybierz 2 stopień bezpieczeństwa.")
+            }
+        }
+    }
+}
+
+function bet(betvalue){
+    betQueue = 0;
+    document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.amount = betvalue;
+    document.querySelector("#game-Limbo").attributes[0].ownerDocument.defaultView.lbg.hotkeyList[2].handler()
+    lastBetwas = betvalue
+
+}
+
